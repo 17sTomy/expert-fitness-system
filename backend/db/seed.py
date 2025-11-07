@@ -1,35 +1,10 @@
 import os
-from sqlalchemy import Column, Integer, String, Float, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-Base = declarative_base()
-
-class Exercise(Base):
-    __tablename__ = "exercises"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    muscle_group = Column(String, nullable=False)
-    equipment = Column(String, nullable=False)  # gym, bodyweight, home
-    difficulty = Column(String, nullable=False)  # beginner, intermediate, advanced
-    description = Column(String, nullable=True)
-
-# Database setup
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fitness_expert.db")
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+from models.exercise import Exercise
+from .database import engine, SessionLocal, Base
 
 def init_db():
     # Crear directorio si no existe (para Docker)
-    db_path = SQLALCHEMY_DATABASE_URL.replace("sqlite:///", "")
+    db_path = str(engine.url).replace("sqlite:///", "")
     if "/" in db_path:
         db_dir = "/".join(db_path.split("/")[:-1])
         if db_dir and not os.path.exists(db_dir):

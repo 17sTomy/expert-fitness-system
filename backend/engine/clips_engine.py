@@ -1,4 +1,5 @@
 import clips
+import os
 from typing import List
 from schemas import UserInput, Recommendation, UserProfile, NutritionalPlan, DayWorkout, ExerciseRecommendation
 from sqlalchemy.orm import Session
@@ -8,7 +9,9 @@ import random
 class ClipsEngine:
     def __init__(self):
         self.env = clips.Environment()
-        self.env.load('clips_rules.clp')
+        # Cargar reglas desde la misma carpeta
+        rules_path = os.path.join(os.path.dirname(__file__), 'clips_rules.clp')
+        self.env.load(rules_path)
     
     def get_recommendations(self, user_input: UserInput, db: Session) -> Recommendation:
         # Reset environment
@@ -130,13 +133,19 @@ class ClipsEngine:
         
         # Get exercises from database
         # Para entrenamiento_casa, incluir tanto "home" como "bodyweight"
+        # Para gimnasio_completo, solo ejercicios de gym (sin bodyweight)
+        # Para peso_corporal, solo ejercicios de bodyweight
         if equipment == "home":
             exercises = db.query(Exercise).filter(
                 Exercise.equipment.in_(["home", "bodyweight"])
             ).all()
-        else:
+        elif equipment == "gym":
             exercises = db.query(Exercise).filter(
-                Exercise.equipment.in_([equipment, "bodyweight"])
+                Exercise.equipment == "gym"
+            ).all()
+        else:  # bodyweight
+            exercises = db.query(Exercise).filter(
+                Exercise.equipment == "bodyweight"
             ).all()
         
         if split_type == "Full Body":

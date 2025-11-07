@@ -1,9 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from models import get_db, init_db
+from db import get_db, init_db
 from schemas import UserInput, Recommendation
-from clips_engine import ClipsEngine
+from engine import ClipsEngine
 
 app = FastAPI(title="Fitness Expert System API")
 

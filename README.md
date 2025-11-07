@@ -121,3 +121,4 @@ Las recomendaciones son orientativas y generadas por un sistema experto educativ
 Este proyecto es de código abierto y está disponible para fines educativos.
 
 
+

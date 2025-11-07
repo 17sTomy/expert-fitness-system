@@ -80,3 +80,4 @@ Cambia el puerto en `backend/main.py` o `frontend/vite.config.ts`
 ### Error: CORS
 Verifica que el backend esté corriendo antes de iniciar el frontend
 
+

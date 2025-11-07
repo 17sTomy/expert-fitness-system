@@ -167,3 +167,4 @@ Para producción, considera:
 3. Usar variables de entorno para configuración
 4. Implementar health checks más robustos
 
+

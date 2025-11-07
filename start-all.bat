@@ -23,3 +23,4 @@ echo Cierra las ventanas del CMD para detener los servidores
 echo.
 pause
 
+

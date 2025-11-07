@@ -202,3 +202,4 @@ El proyecto está diseñado para ser fácilmente escalable:
 - ✅ Base para aplicaciones más complejas
 - ✅ Aprendizaje de CLIPS + FastAPI + React
 
+

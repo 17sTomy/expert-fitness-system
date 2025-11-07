@@ -38,3 +38,4 @@ def get_recommendations(user_input: UserInput, db: Session = Depends(get_db)):
 def health_check():
     return {"status": "healthy"}
 
+

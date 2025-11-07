@@ -226,3 +226,4 @@ Para modificar el comportamiento del sistema, edita `backend/clips_rules.clp`:
 
 ¡El sistema se actualizará automáticamente!
 
+

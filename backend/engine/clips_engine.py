@@ -212,20 +212,25 @@ class ClipsEngine:
         ))
         
         # Lower 1
-        lower_groups = ["piernas", "core"]
         lower1 = []
-        for group in lower_groups:
-            group_exercises = [e for e in exercises if e.muscle_group == group and e.name not in used_exercises]
-            if group_exercises:
-                # Mezclar aleatoriamente
-                random.shuffle(group_exercises)
-                # Seleccionar 1-2 ejercicios
-                num_exercises = random.randint(1, min(2, len(group_exercises)))
-                for _ in range(num_exercises):
-                    if group_exercises:
-                        ex = group_exercises.pop(0)
-                        used_exercises.add(ex.name)
-                        lower1.append(self._create_exercise_rec(ex, nivel, group, lesion_info, equipment))
+        # Para piernas, asegurar al menos 2 ejercicios
+        piernas_exercises = [e for e in exercises if e.muscle_group == "piernas" and e.name not in used_exercises]
+        if piernas_exercises:
+            random.shuffle(piernas_exercises)
+            num_piernas = min(4, len(piernas_exercises))
+            for i in range(num_piernas):
+                ex = piernas_exercises[i]
+                used_exercises.add(ex.name)
+                lower1.append(self._create_exercise_rec(ex, nivel, "piernas", lesion_info, equipment))
+        
+        # Core para Lower 1
+        core_exercises = [e for e in exercises if e.muscle_group == "core" and e.name not in used_exercises]
+        if core_exercises:
+            random.shuffle(core_exercises)
+            if core_exercises:
+                ex = core_exercises.pop(0)
+                used_exercises.add(ex.name)
+                lower1.append(self._create_exercise_rec(ex, nivel, "core", lesion_info, equipment))
         
         workouts.append(DayWorkout(
             dia="Día 2",
@@ -256,18 +261,34 @@ class ClipsEngine:
         
         # Lower 2
         lower2 = []
-        for group in lower_groups:
-            group_exercises = [e for e in exercises if e.muscle_group == group and e.name not in used_exercises]
-            if group_exercises:
-                # Mezclar aleatoriamente
-                random.shuffle(group_exercises)
-                # Seleccionar 1-2 ejercicios
-                num_exercises = random.randint(1, min(2, len(group_exercises)))
-                for _ in range(num_exercises):
-                    if group_exercises:
-                        ex = group_exercises.pop(0)
-                        used_exercises.add(ex.name)
-                        lower2.append(self._create_exercise_rec(ex, nivel, group, lesion_info, equipment))
+        # Para piernas, asegurar al menos 2 ejercicios si hay disponibles
+        # Si no hay suficientes sin usar, permitir reutilizar algunos
+        piernas_exercises = [e for e in exercises if e.muscle_group == "piernas"]
+        piernas_available = [e for e in piernas_exercises if e.name not in used_exercises]
+        
+        if piernas_available:
+            random.shuffle(piernas_available)
+            num_piernas = min(2, len(piernas_available))
+            for i in range(num_piernas):
+                ex = piernas_available[i]
+                used_exercises.add(ex.name)
+                lower2.append(self._create_exercise_rec(ex, nivel, "piernas", lesion_info, equipment))
+        elif piernas_exercises:
+            # Si no hay disponibles sin usar, reutilizar algunos
+            random.shuffle(piernas_exercises)
+            num_piernas = min(2, len(piernas_exercises))
+            for i in range(num_piernas):
+                ex = piernas_exercises[i]
+                lower2.append(self._create_exercise_rec(ex, nivel, "piernas", lesion_info, equipment))
+        
+        # Core para Lower 2
+        core_exercises = [e for e in exercises if e.muscle_group == "core" and e.name not in used_exercises]
+        if core_exercises:
+            random.shuffle(core_exercises)
+            if core_exercises:
+                ex = core_exercises.pop(0)
+                used_exercises.add(ex.name)
+                lower2.append(self._create_exercise_rec(ex, nivel, "core", lesion_info, equipment))
         
         workouts.append(DayWorkout(
             dia="Día 4",
@@ -279,24 +300,20 @@ class ClipsEngine:
     
     def _generate_ppl(self, exercises: List[Exercise], freq: int, nivel: str, lesion_info: dict = None, equipment: str = "gym") -> List[DayWorkout]:
         workouts = []
-        # Usar un set global para evitar repetir ejercicios en toda la rutina
         global_used_exercises = set()
         
-        # Calcular cuántos ciclos necesitamos
-        num_cycles = (freq + 2) // 3  # Redondear hacia arriba
-        
-        for cycle in range(num_cycles):
-            day_offset = cycle * 3
-            
-            # Push (Pecho, Hombros, Tríceps)
+        # Función auxiliar para generar Push
+        def generate_push(day_used_set):
             push = []
-            day_used = set()
+            day_used = day_used_set.copy()
             
             # 2-3 ejercicios de pecho
             pecho_exercises = [e for e in exercises if e.muscle_group == "pecho" and e.name not in global_used_exercises and e.name not in day_used]
             if pecho_exercises:
                 random.shuffle(pecho_exercises)
-                num_pecho = random.randint(2, min(3, len(pecho_exercises)))
+                max_pecho = min(3, len(pecho_exercises))
+                min_pecho = min(2, max_pecho)
+                num_pecho = random.randint(min_pecho, max_pecho) if max_pecho >= min_pecho else len(pecho_exercises)
                 for _ in range(num_pecho):
                     if pecho_exercises:
                         ex = pecho_exercises.pop(0)
@@ -308,7 +325,8 @@ class ClipsEngine:
             hombros_exercises = [e for e in exercises if e.muscle_group == "hombros" and e.name not in global_used_exercises and e.name not in day_used]
             if hombros_exercises:
                 random.shuffle(hombros_exercises)
-                num_hombros = random.randint(1, min(2, len(hombros_exercises)))
+                max_hombros = min(2, len(hombros_exercises))
+                num_hombros = random.randint(1, max_hombros) if max_hombros >= 1 else len(hombros_exercises)
                 for _ in range(num_hombros):
                     if hombros_exercises:
                         ex = hombros_exercises.pop(0)
@@ -316,79 +334,75 @@ class ClipsEngine:
                         global_used_exercises.add(ex.name)
                         push.append(self._create_exercise_rec(ex, nivel, "hombros", lesion_info, equipment))
             
-            # 1-2 ejercicios de tríceps (de brazos)
+            # 1-2 ejercicios de tríceps
             tricep_exercises = [e for e in exercises if e.muscle_group == "brazos" and e.name not in global_used_exercises and e.name not in day_used and ("tricep" in e.name.lower() or "fond" in e.name.lower() or "cerrad" in e.name.lower() or "extensión" in e.name.lower())]
             if not tricep_exercises:
                 tricep_exercises = [e for e in exercises if e.muscle_group == "brazos" and e.name not in global_used_exercises and e.name not in day_used]
             if tricep_exercises:
                 random.shuffle(tricep_exercises)
-                num_tricep = random.randint(1, min(2, len(tricep_exercises)))
+                max_tricep = min(2, len(tricep_exercises))
+                num_tricep = random.randint(1, max_tricep) if max_tricep >= 1 else len(tricep_exercises)
                 for _ in range(num_tricep):
                     if tricep_exercises:
                         ex = tricep_exercises.pop(0)
                         day_used.add(ex.name)
                         global_used_exercises.add(ex.name)
                         push.append(self._create_exercise_rec(ex, nivel, "brazos", lesion_info, equipment))
-            
-            if len(workouts) < freq:
-                workouts.append(DayWorkout(
-                    dia=f"Día {len(workouts) + 1}",
-                    tipo="Push - Empuje",
-                    ejercicios=push
-                ))
-            
-            # Pull (Espalda, Bíceps)
-            day_used_pull = set()
-            pull_exercises = [e for e in exercises if e.muscle_group == "espalda" and e.name not in global_used_exercises]
+            return push
+        
+        # Función auxiliar para generar Pull
+        def generate_pull(day_used_set):
             pull = []
+            day_used = day_used_set.copy()
             
             # 2-3 ejercicios de espalda
+            pull_exercises = [e for e in exercises if e.muscle_group == "espalda" and e.name not in global_used_exercises and e.name not in day_used]
             if pull_exercises:
                 random.shuffle(pull_exercises)
-                num_espalda = random.randint(2, min(3, len(pull_exercises)))
+                max_espalda = min(3, len(pull_exercises))
+                min_espalda = min(2, max_espalda)
+                num_espalda = random.randint(min_espalda, max_espalda) if max_espalda >= min_espalda else len(pull_exercises)
                 for _ in range(num_espalda):
                     if pull_exercises:
                         ex = pull_exercises.pop(0)
-                        day_used_pull.add(ex.name)
+                        day_used.add(ex.name)
                         global_used_exercises.add(ex.name)
                         pull.append(self._create_exercise_rec(ex, nivel, "espalda", lesion_info, equipment))
             
             # 1-2 ejercicios de bíceps
-            biceps_exercises = [e for e in exercises if e.muscle_group == "brazos" and e.name not in global_used_exercises and e.name not in day_used_pull and ("curl" in e.name.lower() or "bíceps" in e.name.lower() or "biceps" in e.name.lower())]
+            biceps_exercises = [e for e in exercises if e.muscle_group == "brazos" and e.name not in global_used_exercises and e.name not in day_used and ("curl" in e.name.lower() or "bíceps" in e.name.lower() or "biceps" in e.name.lower())]
             if not biceps_exercises:
-                biceps_exercises = [e for e in exercises if e.muscle_group == "brazos" and e.name not in global_used_exercises and e.name not in day_used_pull]
+                biceps_exercises = [e for e in exercises if e.muscle_group == "brazos" and e.name not in global_used_exercises and e.name not in day_used]
             if biceps_exercises:
                 random.shuffle(biceps_exercises)
-                num_biceps = random.randint(1, min(2, len(biceps_exercises)))
+                max_biceps = min(2, len(biceps_exercises))
+                num_biceps = random.randint(1, max_biceps) if max_biceps >= 1 else len(biceps_exercises)
                 for _ in range(num_biceps):
                     if biceps_exercises:
                         ex = biceps_exercises.pop(0)
-                        day_used_pull.add(ex.name)
+                        day_used.add(ex.name)
                         global_used_exercises.add(ex.name)
                         pull.append(self._create_exercise_rec(ex, nivel, "brazos", lesion_info, equipment))
-            
-            if len(workouts) < freq:
-                workouts.append(DayWorkout(
-                    dia=f"Día {len(workouts) + 1}",
-                    tipo="Pull - Tirón",
-                    ejercicios=pull
-                ))
-            
-            # Legs
-            day_used_legs = set()
-            leg_exercises = [e for e in exercises if e.muscle_group == "piernas" and e.name not in global_used_exercises]
-            core_exercises = [e for e in exercises if e.muscle_group == "core" and e.name not in global_used_exercises]
+            return pull
+        
+        # Función auxiliar para generar Legs
+        def generate_legs(day_used_set):
             legs = []
+            day_used = day_used_set.copy()
+            
+            leg_exercises = [e for e in exercises if e.muscle_group == "piernas" and e.name not in day_used]
+            core_exercises = [e for e in exercises if e.muscle_group == "core" and e.name not in day_used]
             
             # 2-3 ejercicios de piernas
             if leg_exercises:
                 random.shuffle(leg_exercises)
-                num_piernas = random.randint(2, min(3, len(leg_exercises)))
+                max_piernas = min(3, len(leg_exercises))
+                min_piernas = min(2, max_piernas)
+                num_piernas = random.randint(min_piernas, max_piernas) if max_piernas >= min_piernas else len(leg_exercises)
                 for _ in range(num_piernas):
                     if leg_exercises:
                         ex = leg_exercises.pop(0)
-                        day_used_legs.add(ex.name)
-                        global_used_exercises.add(ex.name)
+                        day_used.add(ex.name)
                         legs.append(self._create_exercise_rec(ex, nivel, "piernas", lesion_info, equipment))
             
             # 1 ejercicio de core
@@ -396,16 +410,80 @@ class ClipsEngine:
                 random.shuffle(core_exercises)
                 if core_exercises:
                     ex = core_exercises.pop(0)
-                    day_used_legs.add(ex.name)
-                    global_used_exercises.add(ex.name)
+                    day_used.add(ex.name)
                     legs.append(self._create_exercise_rec(ex, nivel, "core", lesion_info, equipment))
+            return legs
+        
+        # Función auxiliar para generar Torso (hombros y pecho)
+        def generate_torso(day_used_set):
+            torso = []
+            day_used = day_used_set.copy()
             
-            if len(workouts) < freq:
-                workouts.append(DayWorkout(
-                    dia=f"Día {len(workouts) + 1}",
-                    tipo="Legs - Piernas",
-                    ejercicios=legs
-                ))
+            # 2 ejercicios de hombros
+            hombros_exercises = [e for e in exercises if e.muscle_group == "hombros" and e.name not in global_used_exercises and e.name not in day_used]
+            if hombros_exercises:
+                random.shuffle(hombros_exercises)
+                num_hombros = min(2, len(hombros_exercises))
+                for i in range(num_hombros):
+                    ex = hombros_exercises[i]
+                    day_used.add(ex.name)
+                    global_used_exercises.add(ex.name)
+                    torso.append(self._create_exercise_rec(ex, nivel, "hombros", lesion_info, equipment))
+            
+            # 2 ejercicios de pecho
+            pecho_exercises = [e for e in exercises if e.muscle_group == "pecho" and e.name not in global_used_exercises and e.name not in day_used]
+            if pecho_exercises:
+                random.shuffle(pecho_exercises)
+                num_pecho = min(2, len(pecho_exercises))
+                for i in range(num_pecho):
+                    ex = pecho_exercises[i]
+                    day_used.add(ex.name)
+                    global_used_exercises.add(ex.name)
+                    torso.append(self._create_exercise_rec(ex, nivel, "pecho", lesion_info, equipment))
+            return torso
+        
+        # Función auxiliar para generar Pierna (solo piernas, sin core)
+        def generate_pierna(day_used_set):
+            pierna = []
+            day_used = day_used_set.copy()
+            
+            leg_exercises = [e for e in exercises if e.muscle_group == "piernas" and e.name not in day_used]
+            
+            # 3-4 ejercicios de piernas
+            if leg_exercises:
+                random.shuffle(leg_exercises)
+                num_piernas = min(4, len(leg_exercises))
+                for i in range(num_piernas):
+                    ex = leg_exercises[i]
+                    day_used.add(ex.name)
+                    pierna.append(self._create_exercise_rec(ex, nivel, "piernas", lesion_info, equipment))
+            return pierna
+        
+        if freq == 5:
+            # 5 días: Push, Pull, Legs, Torso, Pierna
+            workouts.append(DayWorkout(dia="Día 1", tipo="Push - Empuje", ejercicios=generate_push(set())))
+            workouts.append(DayWorkout(dia="Día 2", tipo="Pull - Tirón", ejercicios=generate_pull(set())))
+            workouts.append(DayWorkout(dia="Día 3", tipo="Legs - Piernas", ejercicios=generate_legs(set())))
+            workouts.append(DayWorkout(dia="Día 4", tipo="Torso - Hombros y Pecho", ejercicios=generate_torso(set())))
+            workouts.append(DayWorkout(dia="Día 5", tipo="Pierna - Solo Piernas", ejercicios=generate_pierna(set())))
+        elif freq == 6:
+            # 6 días: Push, Pull, Legs x2 (dos ciclos completos)
+            workouts.append(DayWorkout(dia="Día 1", tipo="Push - Empuje", ejercicios=generate_push(set())))
+            workouts.append(DayWorkout(dia="Día 2", tipo="Pull - Tirón", ejercicios=generate_pull(set())))
+            workouts.append(DayWorkout(dia="Día 3", tipo="Legs - Piernas", ejercicios=generate_legs(set())))
+            workouts.append(DayWorkout(dia="Día 4", tipo="Push - Empuje", ejercicios=generate_push(set())))
+            workouts.append(DayWorkout(dia="Día 5", tipo="Pull - Tirón", ejercicios=generate_pull(set())))
+            workouts.append(DayWorkout(dia="Día 6", tipo="Legs - Piernas", ejercicios=generate_legs(set())))
+        else:
+            # Para otras frecuencias, usar lógica anterior
+            num_cycles = (freq + 2) // 3
+            for cycle in range(num_cycles):
+                if len(workouts) < freq:
+                    workouts.append(DayWorkout(dia=f"Día {len(workouts) + 1}", tipo="Push - Empuje", ejercicios=generate_push(set())))
+                if len(workouts) < freq:
+                    workouts.append(DayWorkout(dia=f"Día {len(workouts) + 1}", tipo="Pull - Tirón", ejercicios=generate_pull(set())))
+                if len(workouts) < freq:
+                    workouts.append(DayWorkout(dia=f"Día {len(workouts) + 1}", tipo="Legs - Piernas", ejercicios=generate_legs(set())))
         
         return workouts
     

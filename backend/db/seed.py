@@ -50,6 +50,7 @@ def init_db():
         
         # Piernas - Gym
         Exercise(name="Sentadillas", muscle_group="piernas", equipment="gym", difficulty="intermediate", description="Squats con barra"),
+        Exercise(name="Peso muerto Rumano", muscle_group="piernas", equipment="gym", difficulty="intermediate", description="Romanian Deadlift"),
         Exercise(name="Sentadillas con Mancuernas", muscle_group="piernas", equipment="gym", difficulty="intermediate", description="Goblet squats"),
         Exercise(name="Prensa", muscle_group="piernas", equipment="gym", difficulty="beginner", description="Leg press"),
         Exercise(name="Sentadillas Búlgara", muscle_group="piernas", equipment="gym", difficulty="intermediate", description="Bulgarian split squat"),

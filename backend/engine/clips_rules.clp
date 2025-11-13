@@ -165,14 +165,14 @@
    (assert (plan-entrenamiento (tipo-split "Full Body") (dias-por-semana ?f))))
 
 (defrule plan-frecuencia-media
-   (usuario (frecuencia ?f&:(and (>= ?f 4) (<= ?f 5))))
+   (usuario (frecuencia ?f&:(= ?f 4)))
    =>
    (assert (plan-entrenamiento (tipo-split "Upper/Lower") (dias-por-semana ?f))))
 
 (defrule plan-frecuencia-alta
-   (usuario (frecuencia ?f&:(> ?f 5)))
+   (usuario (frecuencia ?f&:(>= ?f 5)))
    =>
-   (assert (plan-entrenamiento (tipo-split "Push/Pull/Legs") (dias-por-semana 6))))
+   (assert (plan-entrenamiento (tipo-split "Push/Pull/Legs") (dias-por-semana ?f))))
 
 ;;; Consejos según IMC
 
